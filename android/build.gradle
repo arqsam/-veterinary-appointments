@@ -6,15 +6,33 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.22"
+        gradlePluginVersion = "8.1.0"  // versión de Gradle
+        reactNativeGradlePluginVersion = "0.74.5"
+        FLIPPER_VERSION = "0.99.0"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
-        classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("com.android.tools.build:gradle:$gradlePluginVersion")
+        classpath("com.facebook.react:react-native-gradle-plugin:$reactNativeGradlePluginVersion")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath "com.github.dcendents:android-maven-gradle-plugin:2.1"
+    }
+}
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+    tasks.withType(JavaCompile) {
+        options.forkOptions.javaHome = file(System.getenv("JAVA_HOME"))
     }
 }
 

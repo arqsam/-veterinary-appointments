@@ -1,117 +1,160 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, {useState} from 'react';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
   Text,
-  useColorScheme,
-  View,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  Alert,
+  Modal,
 } from 'react-native';
+import Formulario from './src/components/Formulario';
+import Paciente from './src/components/Paciente';
+import DetailPaciente from './src/components/DetailPaciente';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+interface PacienteData {
+  id: number;
+  paciente: string;
+  propietario: string;
+  email: string;
+  telefono: string;
+  fecha: Date;
+  sintomas: string;
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const App: React.FC = () => {
+  //hooks parte superior
+  const [modalVisible, setModalVisible] = useState(false);
+  const [pacientes, setPacientes] = useState<PacienteData[]>([]);
+  const [paciente, setPaciente] = useState({});
+  const [modalPaciente, setModalPaciente] = useState(false);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const editPaciente = (id: number) => {
+    const pacienteEditar = pacientes.filter(p => p.id === id);
+    /* console.log('editando...', pacienteEditar); */
+    setPaciente(pacienteEditar[0]);
+  };
+
+  const deletePaciente = (id: number) => {
+    Alert.alert(
+      '¿Deseas eliminar esta cita?',
+      'Una cita eliminada no se puede recuperar',
+      [
+        {text: 'Cancelar'},
+        {
+          text: 'Sí, Eliminar',
+          onPress: () => {
+            const pacientesActualizados = pacientes.filter(
+              pacientesState => pacientesState.id !== id,
+            );
+
+            setPacientes(pacientesActualizados);
+          },
+        },
+      ],
+    );
+  };
+
+  const cerrarModal = () => {
+    setModalVisible(false);
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.titulo}>
+        Administrador de Citas {''}
+        <Text style={styles.tituloBold}>Veterinaria</Text>
+      </Text>
+      <Pressable
+        onPress={() => setModalVisible(true)}
+        style={styles.btnNuevaCita}>
+        <Text style={styles.btnTextoNuevaCita}>Nueva Cita</Text>
+      </Pressable>
+
+      {pacientes.length === 0 ? (
+        <Text style={styles.noPacientes}>No hay pacientes aún</Text>
+      ) : (
+        <FlatList
+          style={styles.listado}
+          data={pacientes}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => {
+            console.log(item);
+            return (
+              <Paciente
+                item={item}
+                setModalVisible={setModalVisible}
+                setPaciente={setPaciente}
+                editPaciente={editPaciente}
+                deletePaciente={deletePaciente}
+                setModalPaciente={setModalPaciente}
+              />
+            );
+          }}
+        />
+      )}
+
+      {modalVisible && (
+        <Formulario
+          cerrarModal={cerrarModal}
+          pacientes={pacientes}
+          setPacientes={setPacientes}
+          paciente={paciente}
+          setPaciente={setPaciente}
+        />
+      )}
+
+      <Modal visible={modalPaciente} animationType="fade">
+        <DetailPaciente
+          paciente={paciente}
+          setPaciente={setPaciente}
+          setModalPaciente={setModalPaciente}
+        />
+      </Modal>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    backgroundColor: '#F3F4F6',
+    flex: 1,
   },
-  sectionTitle: {
+  titulo: {
+    textAlign: 'center',
+    fontSize: 30,
+    color: '#374151',
+    fontWeight: '600',
+    marginTop: 30,
+  },
+  tituloBold: {
+    fontWeight: '900',
+    color: '#6D28D9',
+  },
+  btnNuevaCita: {
+    backgroundColor: '#6D28D9',
+    padding: 15,
+    marginTop: 30,
+    marginHorizontal: 20,
+    borderRadius: 10,
+  },
+  btnTextoNuevaCita: {
+    textAlign: 'center',
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  noPacientes: {
+    marginTop: 40,
+    textAlign: 'center',
     fontSize: 24,
     fontWeight: '600',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  listado: {
+    marginTop: 50,
+    marginHorizontal: 50,
   },
 });
 
